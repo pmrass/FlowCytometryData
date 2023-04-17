@@ -1,10 +1,8 @@
 classdef PMFlowJoDataSource
-    %PMFLOWJODATASOURCE Summary of this class goes here
-    %   collects user settings for making figures and spreadsheets derived from FloJo data
+    %PMFLOWJODATASOURCE For reading .txt files exported from flowjo and for converting data into data-objects that can then be further processed;
     
     properties (Access = private)
         
-       
         GroupRows
         RowTitles
         
@@ -19,7 +17,6 @@ classdef PMFlowJoDataSource
     
     properties (Access = private) % specific settings for retrieving specific data
         
-    
         MyDataMatrices
         
         MyGroupRows
@@ -28,7 +25,6 @@ classdef PMFlowJoDataSource
         MyRowTitles
         
         MyNameOfDescription
-        
         
     end
     
@@ -43,14 +39,10 @@ classdef PMFlowJoDataSource
         
             function obj = PMFlowJoDataSource(varargin)
                 %PMFLOWJOGROUPS Construct an instance of this class
-                % takes 4 or 5 arguments (5th optional):
-                % 1: character-string with name of "main-file" folder: needs to contain "FlowJoGroupCodes.txt";
-                % 2: character-string with name of folder that contains the csv files that contain the actual data exported from FloJo;
-                % 3: file-code object PMFlowJoFileIDCodes: used to get file-names and panel-titles;
-                % 4: row-titles object: PMRowTitles used for getting row titles (one for each parameter);
-                % 5: time-series titles, cell-string array; empty when no time series;
-                % 6: string of group-data filename;
-                % 7: set match means for different experiments:
+                % takes 2 or 3 arguments
+                % 1: PMFlowJoGroupIndices
+                % 2: PMRowTitles
+                % 3: time-series titles (?)
                 NumberOfArguments = length(varargin);
                 switch NumberOfArguments
                     
@@ -67,11 +59,11 @@ classdef PMFlowJoDataSource
                                  
                     case 3
                        
-                        obj.GroupRows =                     varargin{1};
-                        obj.RowTitles =                     varargin{2};
+                        obj.GroupRows =                             varargin{1};
+                        obj.RowTitles =                             varargin{2};
                         
-                        obj.TimeSeriesTitles =             varargin{3};
-                        obj.MatchMeansOfDifferentExperiments = true;
+                        obj.TimeSeriesTitles =                      varargin{3};
+                        obj.MatchMeansOfDifferentExperiments =      true;
                         
                     
                     case 4
@@ -115,6 +107,19 @@ classdef PMFlowJoDataSource
                 
                
             end
+
+
+            
+
+            function obj  = set.GroupRows(obj, Value)
+                 assert(isa(Value, 'PMFlowJoGroupIndices') , 'Wrong input.')
+
+                obj.GroupRows = Value; 
+
+
+            end
+
+
             
             function obj  = set.RowTitles(obj, Value)
                 try
@@ -245,6 +250,7 @@ classdef PMFlowJoDataSource
               
               obj = obj.setSettingsForRetrivingForIndices(Indices);
             
+              try
                GroupStatisticsListArray =        cellfun(...
                    @(matrix, indices, names) ...
                                                         PMGroupSpreadsheet(...
@@ -254,10 +260,14 @@ classdef PMFlowJoDataSource
                                                                         obj.MyNameOfDescription, ...
                                                                         obj.MyRowTitles,...
                                                                         '').getGroupListStatistics, ...
-                                                                        obj.MyDataMatrices, ...
-                                                                        obj.MyGroupRows, ...
-                                                                        obj.myGroupNames ...
+                                                                        obj.MyDataMatrices(:), ...
+                                                                        obj.MyGroupRows(:), ...
+                                                                        obj.myGroupNames(:) ...
                                                                     );
+                                                                
+              catch
+                  input('Something went wrong.')
+              end
                                                                 
                              
              %      GroupStatisticsListArray = cellfun(@(x) x.getGroupListStatistics, Spreadsheets);

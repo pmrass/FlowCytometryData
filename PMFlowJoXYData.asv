@@ -115,29 +115,20 @@ classdef PMFlowJoXYData
         
         function XYData_CD3 = getXYData(obj, varargin)
             % GETXYDATA returns a specified PMXVsYDataContainer object from CXCR4_InVitroInhibition_OTI_EL4_CD3 experiments;
-            % takes 4 to 5 arguments arguments:
+            % takes 5 arguments arguments:
             % 1: name of wanted experiment-key;
             % 2: name of wanted parameter;
             % 3: selected groups
-            % 4: type:  'IndividualValues', 'PercentageInRange'
-            % 5: range
            
             
             switch length(varargin)
 
-                case {4}
+                case 5
 
                      obj.SelectedExperimentKey =       varargin{1};
                     obj.SelectedParameterName =       varargin{2};
                  %   obj.ParameterNamesFileName =      varargin{3};
                     obj.SelectedGroups =              varargin{3}; 
-
-                  
-                   
-                    XYData_CD3 =                      obj.getXYDataCommon(varargin{4});
-
-                case { 5}
-
                     XYData_CD3 =                      obj.getXYDataCommon(varargin{4}, varargin{5});
 
                

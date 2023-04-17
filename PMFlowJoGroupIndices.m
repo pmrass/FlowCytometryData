@@ -6,6 +6,7 @@ classdef PMFlowJoGroupIndices
     % second part: 1 to multiple infos about file-code and group-rows, separated by commas;
     % e.g. "20210423_Day6,      	 NaN,         	  6,            		5,            	,         	4,           		3"
     % the very last entry is not followed by comma;;
+    % if there are multiple indices per group add multiple numbers not separated by ;
     
     properties (Access = private)
         FolderName

@@ -14,39 +14,53 @@ classdef PMFlowJoDataSourceExport
     methods
         function obj = PMFlowJoDataSourceExport(varargin)
             %PMFLOWJODATASOURCEEXPORT Construct an instance of this class
-            %   Detailed explanation goes here
+            %   Takes 5 arguments:
+            % 1: PMFlowJoDataSource
+            % 2: string for "sub" export folder
+            % 3: cell vector for panel positions: each cell contains row, column position of panel;
+            % 4: string for "main" export folder
+            % 5: cell-string for figure title
             switch length(varargin)
                     case 5
-                    obj.dataSource =        varargin{1};
-                    obj.ExportFolder =        varargin{2};
-                    
-                    obj.panelPositions =        varargin{3};
-                    obj.MainExportFolder =        varargin{4};
-                   obj.figureTitle =        varargin{5};
+                        obj.dataSource =            varargin{1};
+                        obj.ExportFolder =          varargin{2};
+
+                        obj.panelPositions =        varargin{3};
+                        obj.MainExportFolder =       varargin{4};
+                        obj.figureTitle =           varargin{5};
                 
             end
         end
         
-        function obj = export(obj)
-            %METHOD1 Summary of this method goes here
-            %   Detailed explanation goes here
-            obj =           obj.exportFlowSpreadSheetsIntoFile;
-            obj =           obj.exportAllPValuesIntoSpreadSheet;
+       
+    end
+    
+    methods
+       
+         function obj = export(obj)
+            %EXPORT exports data
+            %   exports data 
+            % 1) into spreadsheets that contain data
+            % 2) p-Value spreadsheets
+            % 3) graphs
+            obj =               obj.exportFlowSpreadSheetsIntoFile;
+            obj =               obj.exportAllPValuesIntoSpreadSheet;
             
-            xyPanelSeries = obj.getInitializedFlowXYPanelSeries;
+            xyPanelSeries =     obj.getInitializedFlowXYPanelSeries;
            
-            obj =           obj.exportXYPanelSeries(...
+            obj =               obj.exportXYPanelSeries(...
                                     xyPanelSeries...
                                     );
         end
+        
     end
     
-    methods (Access = private)
+    methods (Access = private) % SETTERS/ ACTION
        
-           function obj = exportFlowSpreadSheetsIntoFile(obj)
-            
-               
-       
+        function obj =      exportFlowSpreadSheetsIntoFile(obj)
+
+
+
             targetFileNames =               cellfun(@(x) [[x{:}], '.text'], obj.dataSource.getFileCodes, 'UniformOutput', false);
             for index = 1 : length(targetFileNames)
                 CurrentName = targetFileNames{index};
@@ -59,32 +73,31 @@ classdef PMFlowJoDataSourceExport
             end
 
             sheetsFromDataSource=       obj.dataSource.getGroupStatisticsSeries.getFormattedSpreadsheets;
-            
+
                 cellfun(@(x, y) PMFile(...
                         [obj.MainExportFolder,  [obj.ExportFolder, '_Spreadsheets']],  x).writeCellString(y), ...
                         targetFileNames, ...
                         sheetsFromDataSource) ;
 
-            
-            
-            
+
+
+
         end
-        
-        function obj = exportAllPValuesIntoSpreadSheet(obj)
-           
-            exportSummaryFile =             PMFile([obj.MainExportFolder, [obj.ExportFolder, '_Figures']], '0_PValueSummary.csv');    
-            mySpreadSheet =                 obj.dataSource.getGroupStatisticsSeries.getPValueSpreadSheet;
-            mySpreadSheet{1,2} =            obj.dataSource.getColumnTitles;
-            exportSummaryFile.writeCellString(mySpreadSheet);
-            
+
+        function obj =      exportAllPValuesIntoSpreadSheet(obj)
+
+        exportSummaryFile =             PMFile([obj.MainExportFolder, [obj.ExportFolder, '_Figures']], '0_PValueSummary.csv');    
+        mySpreadSheet =                 obj.dataSource.getGroupStatisticsSeries.getPValueSpreadSheet;
+        mySpreadSheet{1,2} =            obj.dataSource.getColumnTitles;
+        exportSummaryFile.writeCellString(mySpreadSheet);
+
         end
-        
-        function obj = exportXYPanelSeries(obj, xyPanelSeries)
-            
-            
-            
+
+        function obj =      exportXYPanelSeries(obj, xyPanelSeries)
+
             FigureNumber =                  1;
             for Index = 1: xyPanelSeries.getNumberOfDataTypes
+                
                 xyPanelSeries =         xyPanelSeries.setActiveIndex(Index);
 
                 myFigure =              PMSVGFigure(...
@@ -97,49 +110,52 @@ classdef PMFlowJoDataSourceExport
                 myFigure.writeFigureIntoFile;
             end 
 
-            
-        end
-        
-        function xyPanelSeries = getInitializedFlowXYPanelSeries(obj)
-            
-            xyPanelSeries =         PMSVGDocument_XYPanelSeries(...
-                                                obj.dataSource.getGroupStatisticsSeries, ...
-                                                obj.dataSource.getNumberOfRows);
 
-            xyPanelSeries =         obj.setDefaultSymbolFormattingOfPanel(xyPanelSeries);
-          
-                                             
-            xyPanelSeries =         xyPanelSeries.setSelectedGroups(obj.dataSource.getSelectedGroups);
-            
-            xyPanelSeries =         xyPanelSeries.setFigureTitle(obj.figureTitle);
-            xyPanelSeries =         xyPanelSeries.setPanelTitles(obj.dataSource.getPanelTitles);
-            xyPanelSeries =         xyPanelSeries.setPanelTitlePosition([0, 0]);
-            xyPanelSeries =         xyPanelSeries.setFontSizeOfPanelTitles('10');
-            
-            xyPanelSeries =         xyPanelSeries.setManualPanelLocations(obj.panelPositions);
-            xyPanelSeries =         xyPanelSeries.setPanelSize([300, 200]);
-            xyPanelSeries  =        xyPanelSeries.setGapBetweenRows(0);
-            xyPanelSeries  =        xyPanelSeries.setGapBetweenColumns(30);
-
-            xyPanelSeries =         xyPanelSeries.setRelativeAxesPositions([60 270 50 180]);
-            xyPanelSeries =         xyPanelSeries.setYMaxSameInEachPanel(false);
-            xyPanelSeries =         xyPanelSeries.setHideViolin(true);
-            
-           
-              
-            
-            
-            
         end
-        
-           function panel = setDefaultSymbolFormattingOfPanel(obj, panel)
+
+        function panel =    setDefaultSymbolFormattingOfPanel(obj, panel)
             panel =             panel.setSymbolStyle( ...
                                             PMSVGStyle('none', '1', '#0099ff',  '', 'Ellipse'));
             panel =             panel.setSymbolSize( 9);
-           end
-        
-        
-        
+        end
+
     end
+    
+    methods (Access = private) % GETTERS
+        
+         function xyPanelSeries = getInitializedFlowXYPanelSeries(obj)
+
+                xyPanelSeries =         PMSVGDocument_XYPanelSeries(...
+                                                    obj.dataSource.getGroupStatisticsSeries, ...
+                                                    obj.dataSource.getNumberOfRows);
+
+                xyPanelSeries =         obj.setDefaultSymbolFormattingOfPanel(xyPanelSeries);
+
+
+                xyPanelSeries =         xyPanelSeries.setSelectedGroups(obj.dataSource.getSelectedGroups);
+
+                xyPanelSeries =         xyPanelSeries.setFigureTitle(obj.figureTitle);
+                xyPanelSeries =         xyPanelSeries.setPanelTitles(obj.dataSource.getPanelTitles);
+                xyPanelSeries =         xyPanelSeries.setPanelTitlePosition([0, 0]);
+                xyPanelSeries =         xyPanelSeries.setFontSizeOfPanelTitles('10');
+
+                xyPanelSeries =         xyPanelSeries.setManualPanelLocations(obj.panelPositions);
+                xyPanelSeries =         xyPanelSeries.setPanelSize([300, 200]);
+                xyPanelSeries  =        xyPanelSeries.setGapBetweenRows(0);
+                xyPanelSeries  =        xyPanelSeries.setGapBetweenColumns(30);
+
+                xyPanelSeries =         xyPanelSeries.setRelativeAxesPositions([60 270 50 180]);
+                xyPanelSeries =         xyPanelSeries.setYMaxSameInEachPanel(false);
+                xyPanelSeries =         xyPanelSeries.setHideViolin(true);
+
+
+
+
+
+
+        end
+
+    end
+    
 end
 
