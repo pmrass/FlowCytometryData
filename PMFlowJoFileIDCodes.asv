@@ -218,22 +218,42 @@ classdef PMFlowJoFileIDCodes
         
         
         function  obj = setPropertiesFromFile(obj)
-            text =      fileread([obj.FolderName '/' obj.FileName]);
-            Blocks =    (strsplit(text, '*'))';
+
+            text =                                  fileread();
+            Blocks =                                (strsplit(text, '*'))';
             
-            obj.ListWithAllKeys =               cellfun(@(x) obj.getTitle(x), Blocks, 'UniformOutput', false);
+            obj.ListWithAllKeys =                   obj.getListWithAllKeysForBlocks(Blocks);
             obj.ListWithFileTextsForAllKeys =       cellfun(@(x) obj.getFileNames(x), Blocks, 'UniformOutput', false);
             
-              
-                FileNameTextForActiveKey =          obj.ListWithFileTextsForAllKeys{obj.getFilterIndexForActiveKey};
-                namesSplitBetweenGroups =           obj.splitTextBetweenGroups(FileNameTextForActiveKey);
+            FileNameTextForActiveKey =              obj.ListWithFileTextsForAllKeys{obj.getFilterIndexForActiveKey};
+            namesSplitBetweenGroups =               obj.splitTextBetweenGroups(FileNameTextForActiveKey);
 
-                fileCodesPerGroup =                   cellfun(@(x) obj.splitFileNamesWithinGroups(x), namesSplitBetweenGroups, 'UniformOutput', false);
+            fileCodesPerGroup =                     cellfun(@(x) obj.splitFileNamesWithinGroups(x), namesSplitBetweenGroups, 'UniformOutput', false);
             
-                
-            obj.FileTextsForActiveKey =     fileCodesPerGroup;
+            obj.FileTextsForActiveKey =             fileCodesPerGroup;
         
         end
+
+        function ListWithAllKeys = getListWithAllKeysForBlocks(obj, Blocks)
+           ListWithAllKeys =                   cellfun(@(x) obj.getTitle(x), Blocks, 'UniformOutput', false);
+
+           ListWithUniqueKeys =                 unique(ListWithAllKeys);
+
+
+           ErrorText = sprintf('There is something wrong with file %s')
+           assert(length(ListWithAllKeys == ListWithUniqueKeys), 'Problem with fi')
+
+
+
+        end
+
+        function path = getCompletePath(obj)
+
+            [obj.FolderName '/' obj.FileName]
+
+        end
+
+
         
         function title = getTitle(~, Text)
             title = strsplit(Text, ':');

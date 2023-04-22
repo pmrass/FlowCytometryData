@@ -218,22 +218,50 @@ classdef PMFlowJoFileIDCodes
         
         
         function  obj = setPropertiesFromFile(obj)
-            text =      fileread([obj.FolderName '/' obj.FileName]);
-            Blocks =    (strsplit(text, '*'))';
-            
-            obj.ListWithAllKeys =               cellfun(@(x) obj.getTitle(x), Blocks, 'UniformOutput', false);
-            obj.ListWithFileTextsForAllKeys =       cellfun(@(x) obj.getFileNames(x), Blocks, 'UniformOutput', false);
-            
-              
-                FileNameTextForActiveKey =          obj.ListWithFileTextsForAllKeys{obj.getFilterIndexForActiveKey};
-                namesSplitBetweenGroups =           obj.splitTextBetweenGroups(FileNameTextForActiveKey);
 
-                fileCodesPerGroup =                   cellfun(@(x) obj.splitFileNamesWithinGroups(x), namesSplitBetweenGroups, 'UniformOutput', false);
-            
+            try
                 
-            obj.FileTextsForActiveKey =     fileCodesPerGroup;
+                text =                                  fileread(obj.getCompletePath);
+                Blocks =                                (strsplit(text, '*'))';
+                
+                obj.ListWithAllKeys =                   obj.getListWithAllKeysForBlocks(Blocks);
+                obj.ListWithFileTextsForAllKeys =       cellfun(@(x) obj.getFileNames(x), Blocks, 'UniformOutput', false);
+                
+                FileNameTextForActiveKey =              obj.ListWithFileTextsForAllKeys{obj.getFilterIndexForActiveKey};
+                namesSplitBetweenGroups =               obj.splitTextBetweenGroups(FileNameTextForActiveKey);
+    
+                fileCodesPerGroup =                     cellfun(@(x) obj.splitFileNamesWithinGroups(x), namesSplitBetweenGroups, 'UniformOutput', false);
+                
+                obj.FileTextsForActiveKey =             fileCodesPerGroup;
+
+            catch ME
+                throw(ME)
+
+
+            end
         
         end
+
+        function ListWithAllKeys = getListWithAllKeysForBlocks(obj, Blocks)
+           ListWithAllKeys =                   cellfun(@(x) obj.getTitle(x), Blocks, 'UniformOutput', false);
+
+           ListWithUniqueKeys =                 unique(ListWithAllKeys);
+
+
+           ErrorText = sprintf('There is something wrong with file %s. It contains duplicate keys. Check the file and remove duplicates', obj.getCompletePath);
+           assert(length(ListWithAllKeys) == length(ListWithUniqueKeys), ErrorText)
+
+
+
+        end
+
+        function path = getCompletePath(obj)
+
+           path =  [obj.FolderName '/' obj.FileName];
+
+        end
+
+
         
         function title = getTitle(~, Text)
             title = strsplit(Text, ':');

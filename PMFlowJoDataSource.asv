@@ -51,7 +51,7 @@ classdef PMFlowJoDataSource
                     case 2
                        
                         obj.GroupRows =                 varargin{1};
-                        obj.RowTitles =                 varargin{2};
+                        obj.RowTitles =                 'x';
                         
                         obj.TimeSeriesTitles =              ''; 
                         obj.MatchMeansOfDifferentExperiments = true;
@@ -124,10 +124,10 @@ classdef PMFlowJoDataSource
             function obj  = set.RowTitles(obj, Value)
 
                 try
-                    assert(isa(Value, 'PMRowTitles') && isscalar(Value), 'PMRowTitles required.')
+                    assert(isa(Value, 'PMRowTitles') && isscalar(Value), 'Wrong input.')
                 catch ME
-                    throw(ME)
-                   
+                    error(ME)
+                    error('Row titles set incorrectly.', ME)
                 end
 
                 obj.RowTitles = Value; 

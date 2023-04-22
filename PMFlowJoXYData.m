@@ -134,7 +134,11 @@ classdef PMFlowJoXYData
 
                   
                    
-                    XYData_CD3 =                      obj.getXYDataCommon(varargin{4});
+                    try
+                        XYData_CD3 =                      obj.getXYDataCommon(varargin{4});
+                    catch ME
+                        throw(ME)
+                    end
 
                 case { 5}
 
@@ -178,12 +182,19 @@ classdef PMFlowJoXYData
                 
             end
   
+            try
                 dataSource = PMFlowJoDataSource(...
                     obj.getGroupRowsObject, ...
                     obj.getRowTitlesObject ...
                     );
                 
                 dataSource = dataSource.setMatchMeansOfDifferentExperiments(obj.MatchMeans);
+
+            catch ME
+                throw(ME)
+
+
+            end
                    
            end
                 
