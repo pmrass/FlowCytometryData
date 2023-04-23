@@ -137,7 +137,7 @@ classdef PMFlowJoXYData
                     try
                         XYData_CD3 =                      obj.getXYDataCommon(varargin{4});
                     catch ME
-                        throw(ME)
+                        rethrow(ME)
                     end
 
                 case { 5}
@@ -184,14 +184,14 @@ classdef PMFlowJoXYData
   
             try
                 dataSource = PMFlowJoDataSource(...
-                    obj.getGroupRowsObject, ...
-                    obj.getRowTitlesObject ...
+                    obj.getGroupIndicesObject, ...
+                    obj.getParameterObject ...
                     );
                 
-                dataSource = dataSource.setMatchMeansOfDifferentExperiments(obj.MatchMeans);
+                    dataSource = dataSource.setMatchMeansOfDifferentExperiments(obj.MatchMeans);
 
             catch ME
-                throw(ME)
+                rethrow(ME)
 
 
             end
@@ -210,13 +210,23 @@ classdef PMFlowJoXYData
             switch Type
                
                 case 'IndividualValues'
-                    XYData =                obj.getGroupStatistics.getXYData(obj.SelectedGroups);
+                        MyFlowJoDataSource =        obj.getFlowJoDataSource;
+                        MyGroupStatisticsLists =    MyFlowJoDataSource.getGroupStatisticsLists;
+                        groupStatistics =           arrayfun(@(x) x.getGroupStatisticsWithParameterName(obj.SelectedParameterName), MyGroupStatisticsLists);
+                        XYData =                    arrayfun(@(x) x.getXYData(obj.SelectedGroups), groupStatistics);
                     
                 case 'PercentageInRange'
                     assert(length(varargin) == 1, 'Wrong input.')
                     Range = varargin{1};
                     assert(PMNumbers(Range).isNumericVector, 'Wrong input.')
-                    XYData =                obj.getGroupStatistics.getXYData(obj.SelectedGroups);
+
+                      MyFlowJoDataSource =        obj.getFlowJoDataSource;
+                       MyGroupStatisticsLists =    MyFlowJoDataSource.getGroupStatisticsLists;
+                        groupStatistics =           arrayfun(@(x) x.getGroupStatisticsWithParameterName(obj.SelectedParameterName), MyGroupStatisticsLists);
+
+                 
+
+                    XYData =                groupStatistics.getXYData(obj.SelectedGroups);
                     XYData =                XYData.getPercentagesPerBin(varargin{1});
                     
                 otherwise
@@ -224,10 +234,10 @@ classdef PMFlowJoXYData
                 
             end
             
-                XYData =                XYData.setName(obj.SelectedExperimentKey);
-                XYData =                XYData.setYParameter(obj.SelectedParameterName);
-                XYData =                XYData.setCenterType(obj.CenterType);
-                XYData =                XYData.setPValueType(obj.StatisticsTest);
+                XYData =              arrayfun(@(x)x.setName(obj.SelectedExperimentKey), XYData);
+                XYData =                 arrayfun(@(x)x.setYParameter(obj.SelectedParameterName), XYData);
+                XYData =                 arrayfun(@(x)x.setCenterType(obj.CenterType), XYData);
+                XYData =                 arrayfun(@(x)x.setPValueType(obj.StatisticsTest), XYData);
                 
         end
         
@@ -241,12 +251,7 @@ classdef PMFlowJoXYData
     
     methods (Access = private) % GETTERS FLOW-JO DATA
         
-        function groupStatistics = getGroupStatistics(obj)
-               groupStatistics =          ...
-                   obj.getFlowJoDataSource.getGroupStatisticsListsForIndices(1).getGroupStatisticsWithParameterName(obj.SelectedParameterName);
-                
-            
-        end
+    
         
    
     
@@ -257,16 +262,10 @@ classdef PMFlowJoXYData
     
     methods (Access = private) % GETTERS FUNDAMENTAL OBJECTS
         
-        function MyGroupRows = getGroupRowsObject(obj)
+        function MyGroupRows = getGroupIndicesObject(obj)
 
 
                 [MyFolder, Name, Extension ] =              fileparts( obj.FileNameWithGroupIndices);
-
-
-               
-
-
-
                 MyGroupRows =                     PMFlowJoGroupIndices(...
                                                         MyFolder, ...
                                                         [ Name, Extension ],  ...
@@ -281,8 +280,6 @@ classdef PMFlowJoXYData
 
               [MyFolder, Name, Extension] =              fileparts( obj.FileNameWithFilenameInfo);
 
-             
-
                       myFileIDCodes =   PMFlowJoFileIDCodes(...
                         MyFolder,  ...
                         obj.SelectedExperimentKey, ...
@@ -295,7 +292,7 @@ classdef PMFlowJoXYData
         
         end
         
-        function myRowTitles = getRowTitlesObject(obj)
+        function myRowTitles = getParameterObject(obj)
 
             [MyFolder, Name, Extension ] = fileparts(   obj.FileNameWithRowTitles);
             

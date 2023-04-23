@@ -171,7 +171,7 @@ classdef PMFlowJoFileIDCodes
         
     end
     
-    methods % getters
+    methods % GETTERS
 
           function FileCodes = getFileCodes(obj)
             error('Use getFileCodesPerGroup.')
@@ -181,12 +181,11 @@ classdef PMFlowJoFileIDCodes
           function fileCodesPerGroup = getFileCodesPerGroup(obj)
                 %GETFILECODES get filenames linked to active key, split by groups;
                 % output is a cell array: each cell contains a cell-string with the names of the file-names linked to each group;
+                % the file-names do not contain extensions, they need to be added;
                 fileCodesPerGroup =                  obj.FileTextsForActiveKey;
             
-              
-          end
+         end
         
-          
         function key = getActiveKey(obj)
             key = obj.ActiveKey;
 
@@ -197,7 +196,6 @@ classdef PMFlowJoFileIDCodes
             % the title is drawn from the string and keeps only the string before the second under-line so that the string should contain date and day of the experiment;
             strings =          cellfun(@(x) PMString(x), obj.FileTextsForActiveKey);
             panelTitles =      arrayfun(@(x) x.getTruncatedStringsBefore('_', 2), strings, 'UniformOutput', false);
-
         end
         
         function number = getNumberOfGroups(obj)
@@ -220,7 +218,7 @@ classdef PMFlowJoFileIDCodes
         function  obj = setPropertiesFromFile(obj)
 
             try
-                
+
                 text =                                  fileread(obj.getCompletePath);
                 Blocks =                                (strsplit(text, '*'))';
                 

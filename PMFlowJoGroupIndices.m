@@ -126,6 +126,18 @@ classdef PMFlowJoGroupIndices
             GroupNames = obj.GroupNames; 
             
         end
+
+            function rowsForSeparateFileCodes = getNonPooledGroupIndices(obj)
+
+                        FileCodesPerGroup =                  obj.FileCodes.getFileCodesPerGroup; % cell array:
+            
+                    rowsForSeparateFileCodes =          cellfun(@(x) obj.getGroupRowsForFileCodes(x), FileCodesPerGroup, 'UniformOutput', false);
+            
+
+
+
+            end
+            
               
         function mergedRows =       getGroupRows(obj)
             % GETGROUPROWS returns a cell-array that contains group-row information;
@@ -216,18 +228,16 @@ classdef PMFlowJoGroupIndices
            % out(isnan(out)) = [];
         end
 
+    
+
+
         function mergedRows =             getSelectedRowNumbers(obj)
-               
-            FileCodesPerGroup =                  obj.FileCodes.getFileCodesPerGroup; % cell array:
-            
-            rowsForSeparateFileCodes =          cellfun(@(x) obj.getGroupRowsForFileCodes(x), FileCodesPerGroup, 'UniformOutput', false);
-            
+            rowsForSeparateFileCodes =          obj.getNonPooledGroupIndices;
+
             mergedRows =                        cellfun(@(x) PMFlowJoExports().mergeGroupRows(x), rowsForSeparateFileCodes, 'UniformOutput', false);
             assert(isvector(mergedRows), 'Wrong content.')
             mergedRows =                        mergedRows(:);
             assert(isvector(mergedRows) && iscell(mergedRows), 'Group rows must be a vector of numerical cells.')
-            
-            
             
         end
              

@@ -5,9 +5,8 @@ classdef PMFlowJoExport
     properties (Access = private)
         File
         
-        SpecimenFilters % should this be removed?
-        StainingFilter % should this be removed?
-        
+   
+     
     end
     
     methods % initialize
@@ -35,6 +34,10 @@ classdef PMFlowJoExport
     methods % getters
         
         function Data = getSpreadSheetOfData(obj)
+            % GETSPREADSHEETOFDATA returns numerical data in matrix form;
+            % removes row and column titles:
+            % each row contains data for a different sample (e.g., lung from mouse 1, etc.);
+            % each column contains data for a different parameter (e.g. percentage of CD69+ t cells, etc.);
               Data =     obj.getDataInMatrixSpreadSheet;
         end
         
@@ -42,11 +45,7 @@ classdef PMFlowJoExport
             Summary = obj.getSummaryInternal;  
          end
         
-        function obj = setSpecimenFilters(obj, varargin)
-            assert(length(varargin) == 1, 'Wrong argument number')
-            obj.SpecimenFilters =   varargin{1};
-        end
-
+     
         function SpecimenNames = getSpecimenNames(obj)
             SpecimenNames =  obj.getSpecimenTitles;
         end
@@ -63,35 +62,40 @@ classdef PMFlowJoExport
         end
         
     end
-    
-    methods  (Access = private)
+
+    methods (Access = private) % GETTERS: NUMBER OF SPECIMENS;
+
+          function number = getNumberOfSpecimens(obj)
+            titles =    obj.getSpecimenTitles;
+            number =    length(titles);
+        end
         
-        %% get data-codes:
-         function number = getNumberOfDataTypes(obj)
-             Data =     obj.getDataInMatrixSpreadSheet;
-             number =   size(Data, 2);
-         end
-        
-        %% get data:
+        function titles = getSpecimenTitles(obj)
+            parsed =        obj.convertFileContentIntoCellMatrix(obj.File.getContent);
+            titles =        parsed(:, 1);
+        end
+
+    end
+
+    methods (Access = private) % READ DATA FROM FILE
+
         function data = getDataInMatrixSpreadSheet(obj)
             data =      cellfun(@(x) str2double(x), obj.getDataInCellSpreadsheet);
         end
         
         function CellSpreadsheetWithoutRowTitles = getDataInCellSpreadsheet(obj)
-            CellSpreadsheetWithRowTitles =          obj.convertFileContentIntoCellMatrix;
-            CellSpreadsheetWithoutRowTitles =      CellSpreadsheetWithRowTitles(:, 2:end - 1);
+            CellSpreadsheetWithSampleColumn =       obj.convertFileContentIntoCellMatrix(obj.File.getContent);
+            CellSpreadsheetWithoutRowTitles =       CellSpreadsheetWithSampleColumn(:, 2 : end - 1); % remove first (sample) column and last (empty) column;
         end
         
-        
-        function parsed = convertFileContentIntoCellMatrix(obj)
-            CellVectorForEachFile =                 (strsplit(obj.File.getContent,'\n'))';
-            CellVectorForEachFile_TitlesRemoved =    CellVectorForEachFile(2: end-3,:); 
-            CellVectorForEachFile_TitlesRemoved =    cellfun(@(x) obj.removeCommasInFileName(x), CellVectorForEachFile_TitlesRemoved,'UniformOutput', false);
-            currentResult=                          cellfun(@(x) strsplit(x,','), CellVectorForEachFile_TitlesRemoved, 'UniformOutput', false);
-            parsed =                                vertcat(currentResult{:});
+        function parsed = convertFileContentIntoCellMatrix(obj, RawData)
+            CellVectorForEachFile =                     (strsplit(RawData,'\n'))';
+            CellVectorForEachFile_TitlesRemoved =       CellVectorForEachFile(2: end-3,:); 
+            CellVectorForEachFile_TitlesRemoved =       cellfun(@(x) obj.removeCommasInFileName(x), CellVectorForEachFile_TitlesRemoved,'UniformOutput', false);
+            currentResult=                              cellfun(@(x) strsplit(x,','), CellVectorForEachFile_TitlesRemoved, 'UniformOutput', false);
+            parsed =                                    vertcat(currentResult{:});
         end
         
-
         function [string] = removeCommasInFileName(obj, string)
             % not totally sure what this is doing; remove?
             apostrophe = find(string == '"');
@@ -102,17 +106,19 @@ classdef PMFlowJoExport
             end
         end
         
-  
-        %% get number of specimens:
-        function number = getNumberOfSpecimens(obj)
-            titles =    obj.getSpecimenTitles;
-            number =    length(titles);
-        end
+    end
+    
+    methods  (Access = private)
         
-        function titles = getSpecimenTitles(obj)
-            parsed =        obj.convertFileContentIntoCellMatrix;
-            titles =        parsed(:, 1);
-        end
+        %% get data-codes:
+         function number = getNumberOfDataTypes(obj)
+             Data =     obj.getDataInMatrixSpreadSheet;
+             number =   size(Data, 2);
+         end
+        
+     
+       
+      
         
         %% get  summary;
         function Summary = getSummaryInternal(obj)
@@ -128,10 +134,7 @@ classdef PMFlowJoExport
 
         end
         
-        
-        %% statistics: this could become its own statistics class;
-        % statistics part was moved to PMGroupStatisticsList;
-         
+      
     end
     
 end
