@@ -1,26 +1,25 @@
 classdef PMFlowJoDataSource
     %PMFLOWJODATASOURCE For reading .txt files exported from flowjo and for converting data into data-objects that can then be further processed;
-    % The main method
     
     properties (Access = private)
         
         GroupIndicesObject
         RowTitles
-        MatchMeansOfDifferentExperiments =      false;
-
         TimeSeriesTitles
-        
+        MatchMeansOfDifferentExperiments =      false;
           
     end
     
-    methods % INITIALIZATION
+
+    
+    methods % initialization
         
             function obj = PMFlowJoDataSource(varargin)
                 %PMFLOWJOGROUPS Construct an instance of this class
                 % takes 2 or 3 arguments
                 % 1: PMFlowJoGroupIndices
                 % 2: PMRowTitles
-                % 3: logical scalar: whether or not you want to adjust the means of repeats from experiments;
+                % 3: time-series titles (?)
                 NumberOfArguments = length(varargin);
                 switch NumberOfArguments
                     
@@ -84,11 +83,16 @@ classdef PMFlowJoDataSource
                
             end
 
+
+            
+
             function obj  = set.GroupIndicesObject(obj, Value)
                  assert(isa(Value, 'PMFlowJoGroupIndices') , 'Input must be of type PMFlowJoGroupIndices.')
                  obj.GroupIndicesObject = Value; 
             end
 
+
+            
             function obj  = set.RowTitles(obj, Value)
 
                 try
@@ -100,7 +104,8 @@ classdef PMFlowJoDataSource
 
                 obj.RowTitles = Value; 
             end
-               
+            
+           
     end
 
     methods % SUMMARY
@@ -155,11 +160,13 @@ classdef PMFlowJoDataSource
     
     methods % SETTERS
         
-        function obj =                      setMatchMeansOfDifferentExperiments(obj, Value)
+        function obj = setMatchMeansOfDifferentExperiments(obj, Value)
             obj.MatchMeansOfDifferentExperiments = Value; 
         end
         
+  
     end
+    
     
     methods % GETTERS
         
@@ -183,14 +190,11 @@ classdef PMFlowJoDataSource
                     obj =                                   obj.testMatchingOfParametersAndMatrices;
                     obj =                                   obj.testMatchingOfGroupIndicesAndMatrices;
 
-                    % group-specific data:
-                    ListWithPooledSpreadsheets =            obj.getPooledMatrixListsForAllGroups;
+                    PooledMatrixListsForAllGroups =         obj.getPooledMatrixListsForAllGroups;
                     ListWithGroupIndices =                  obj.getInternalGroupIndicesForAllExternalGroups;
-                    ListWithGrourNames =                    obj.getGroupNamesForInternalAndExternalGroups;
-                    
-                    % data that apply for all groups:
-                    MyDescription =                         obj.getDescription;
-                    NamesOfAllParameters =                  obj.getRowTitles;
+
+
+
 
                   % if there is only one group, then there will be only one entry in the cell-arrays;
                   % this is recommended: if there are multiple groups, they should be read separately by creating multiple objects;
@@ -200,12 +204,12 @@ classdef PMFlowJoDataSource
                                                                         matrix, ...
                                                                         indices, ...
                                                                         names, ...
-                                                                        MyDescription, ...
-                                                                        NamesOfAllParameters,...
+                                                                        obj.getDescription, ...
+                                                                         obj.RowTitles.getRowTitles,...
                                                                         '').getGroupListStatistics, ...
-                                                                        ListWithPooledSpreadsheets, ...
+                                                                        PooledMatrixListsForAllGroups, ...
                                                                         ListWithGroupIndices, ...
-                                                                        ListWithGrourNames...
+                                                                        obj.getGroupNamesForInternalAndExternalGroups...
                                                                     );
                                                                 
               catch ME
@@ -217,7 +221,7 @@ classdef PMFlowJoDataSource
              
     end
 
-    methods % GETTERS: MAYBE REMOVED IN FUTURE VERSIONS;
+    methods % GETTERS: CSV-FILES EXPORTED FROM FLOW-JO
 
         function columnTitles =             getColumnTitles(obj)
             % GETCOLUMNTITLES gets column titles for spreadsheet;
@@ -266,6 +270,113 @@ classdef PMFlowJoDataSource
         function folder =                   getSourceFolder(obj)
             folder = obj.getObjectForFlowCSVFiles.getDataSourceFolder;
         end
+
+
+  
+
+
+    end
+
+    methods (Access = private ) % GETTERS: GROUP-NAMES
+
+            function myGroupNames = getGroupNamesForInternalAndExternalGroups(obj)
+            % GETGROUPNAMELIST returns cell array with "group-list";
+            % returns a cell-array containing group-names
+            % each cell contains information for "external" groups;
+            % each cell contains a cell-string array with the different names of the ;
+
+
+            % first each cell contains an array of "internal" groups (to split up indivual Flow-Jo csv files;
+            % in addition there each cell is for different "external" groups;
+            % they should not be used in combination;
+            % external groups are discouraged, they are just kept for backward compatibility;
+
+            if ~isempty(obj.getTimeSeriesTitles)
+                warning('To use time series titles is not encouraged.')
+                myGroupNames =              obj.getTimeSeriesTitles;
+                myGroupNames =              cellfun(@(x) {x}, myGroupNames, 'UniformOutput', false);
+               
+            else
+                GroupNames =                 obj.GroupIndicesObject.getGroupNames;
+                myGroupNames =              repmat({GroupNames}, obj.getNumberOfFlowJoCSVDataSources, 1);               
+              
+            end
+
+            myGroupNames = myGroupNames(:);
+            
+            
+            
+            end
+
+            function rowTitles =                getTimeSeriesTitles(obj)
+                rowTitles = obj.TimeSeriesTitles;
+            end
+
+
+
+
+
+    end
+
+    methods (Access = private) % GETTERS (used to be public, see if they are needed);
+
+        function MyNameOfDescription = getDescription(obj)
+
+              if ~isempty(obj.getTimeSeriesTitles)
+                warning('To use time series titles is not encouraged.')
+                MyNameOfDescription =       {'TimeCourseExperiment'};
+
+              else       
+                MyNameOfDescription =       {obj.getObjectForFlowCSVFiles.getActiveKey};
+
+            end
+
+
+        end
+
+    
+
+        function GroupRowList = getInternalGroupIndicesForAllExternalGroups(obj)
+            % GETGROUPROWS returns cell array with group-indices;
+            % each cell contains information for various "external" groups;
+            % each cell contains a numerical vector containing indices;
+
+             AllGroupRows =                     obj.GroupIndicesObject.getGroupRows;
+        
+            GroupRowList =                AllGroupRows(:);
+            cellfun(@(x)    assert(isvector(x) && iscell(x), 'Group rows must be a vector of numerical cells.'), GroupRowList);
+            cellfun(@(x)   ...
+                 cellfun(@(x) assert(isvector(x) && isnumeric(x), 'Group rows must be a vector of numerical cells.'), x), ...
+                 GroupRowList ...
+                 );
+             
+        end
+
+        function rowTitles =                getRowTitles(obj)
+            % GETROWTITLES gets "row-titles", this is a list of strings with names for each of the different parameters that are analyzed (e.g. ;
+            % the data are retrieved with the obj.RowTitles object, which retrieves the "row-titles" from a file;
+            % this has the advantage that changes can be made anytime and will be reflected in the final figures immediately;
+            rowTitles = obj.RowTitles.getRowTitles;
+
+        end
+
+     
+
+        function structure =                getStructure(obj)
+
+            structure.GroupNames =              obj.GroupIndicesObject.getGroupNames;
+            structure.GroupIndicesObject =      obj.GroupIndicesObject.getGroupRows;
+
+            structure.SpreadsheetRowTitles =            obj.RowTitles.getRowTitles;
+
+            if isempty(obj.getTimeSeriesTitles)
+                structure.TimeTitles =                      obj.TimeSeriesTitles;
+            else
+
+                structure.TimeTitles =                    obj.getTimeSeriesTitles;
+            end
+        end
+
 
     end
 
@@ -332,6 +443,26 @@ classdef PMFlowJoDataSource
 
     end
 
+    methods (Access = private) % HELPER
+        
+            function string = convertCellStringToCharacter(~, Cell)
+               string = Cell{1};
+                for Index = 1: length(Cell) - 1
+                    string = sprintf('%s; %s', string, Cell{Index});
+                end
+   
+            end
+            
+            function string = connectWithComma(~, Cell)
+                string = [Cell{1}, ','];
+                for Index = 1:length(Cell)-1
+                    string = [string, Cell{Index + 1} , ', '];
+                end
+
+            end 
+
+    end
+
     methods (Access = private)  % GETTERS FOR NON-POOLED DATA-SPREADSHEETS (FROM FLOW-JO EXPORTED CSV-FILES);
 
          function Matrices =         getNonPooledMatricesForAllGroups(obj)
@@ -389,122 +520,10 @@ classdef PMFlowJoDataSource
             fileIDObject =      obj.GroupIndicesObject.getFileCodes;
         end
 
+
     end
-
-    methods (Access = private) % GETTERS FOR GROUP-INDICES OF INTERNAL GROUPS;
-
-         function GroupRowList = getInternalGroupIndicesForAllExternalGroups(obj)
-            % GETGROUPROWS returns cell array with group-indices;
-            % each cell contains information for various "external" groups;
-            % each cell contains a numerical vector containing indices;
-
-             AllGroupRows =                     obj.GroupIndicesObject.getGroupRows;
-        
-            GroupRowList =                AllGroupRows(:);
-            cellfun(@(x)    assert(isvector(x) && iscell(x), 'Group rows must be a vector of numerical cells.'), GroupRowList);
-            cellfun(@(x)   ...
-                 cellfun(@(x) assert(isvector(x) && isnumeric(x), 'Group rows must be a vector of numerical cells.'), x), ...
-                 GroupRowList ...
-                 );
-             
-         end
-         
-    end
-
-    methods (Access = private ) % GETTERS: GROUP-NAMES
-
-            function myGroupNames =             getGroupNamesForInternalAndExternalGroups(obj)
-                % GETGROUPNAMELIST returns cell array with "group-list";
-                % returns a cell-array containing group-names
-                % each cell contains information for "external" groups;
-                % each cell contains a cell-string array with the different names of the "internal" groups;
-                % using external and internal groups together can be confusing;
-                % the use of internal groups is recommended
     
-                if ~isempty(obj.getTimeSeriesTitles)
-                    warning('To use time series titles is not encouraged.')
-                    myGroupNames =              obj.getTimeSeriesTitles;
-                    myGroupNames =              cellfun(@(x) {x}, myGroupNames, 'UniformOutput', false);
-                   
-                else
-                    GroupNames =                 obj.GroupIndicesObject.getGroupNames;
-                    myGroupNames =              repmat({GroupNames}, obj.getNumberOfFlowJoCSVDataSources, 1);               
-                  
-                end
+  
     
-                myGroupNames = myGroupNames(:);
-                
-                
-            
-            end
-
-            function rowTitles =                getTimeSeriesTitles(obj)
-                rowTitles = obj.TimeSeriesTitles;
-            end
-
-    end
-
-    methods (Access = private) % GETTERS FOR GENERAL PROPERTIES;
-        
-        function MyNameOfDescription =      getDescription(obj)
-
-              if ~isempty(obj.getTimeSeriesTitles)
-                warning('To use time series titles is not encouraged.')
-                MyNameOfDescription =       {'TimeCourseExperiment'};
-
-              else       
-                MyNameOfDescription =       {obj.getObjectForFlowCSVFiles.getActiveKey};
-
-            end
-
-
-        end
-
-        function rowTitles =                getRowTitles(obj)
-            % GETROWTITLES gets "row-titles", this is a list of strings with names for each of the different parameters that are analyzed (e.g. ;
-            % the data are retrieved with the obj.RowTitles object, which retrieves the "row-titles" from a file;
-            % this has the advantage that changes can be made anytime and will be reflected in the final figures immediately;
-            rowTitles = obj.RowTitles.getRowTitles;
-
-        end
-
-        function structure =                getStructure(obj)
-
-            structure.GroupNames =              obj.GroupIndicesObject.getGroupNames;
-            structure.GroupIndicesObject =      obj.GroupIndicesObject.getGroupRows;
-
-            structure.SpreadsheetRowTitles =            obj.getRowTitles;
-
-            if isempty(obj.getTimeSeriesTitles)
-                structure.TimeTitles =                      obj.TimeSeriesTitles;
-            else
-
-                structure.TimeTitles =                    obj.getTimeSeriesTitles;
-            end
-        end
-
-    end
-
-    methods (Access = private) % HELPER
-        
-            function string = convertCellStringToCharacter(~, Cell)
-               string = Cell{1};
-                for Index = 1: length(Cell) - 1
-                    string = sprintf('%s; %s', string, Cell{Index});
-                end
-   
-            end
-            
-            function string = connectWithComma(~, Cell)
-                string = [Cell{1}, ','];
-                for Index = 1:length(Cell)-1
-                    string = [string, Cell{Index + 1} , ', '];
-                end
-
-            end 
-
-    end
-
- 
 end
 
