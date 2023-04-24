@@ -193,8 +193,8 @@ classdef PMFlowJoXYData
                     MyFlowJoDataSource =        obj.getFlowJoDataSource;
                     MyGroupStatisticsLists =    MyFlowJoDataSource.getGroupStatisticsLists;
                     
-                    groupStatistics =           arrayfun(@(x) x.getGroupStatisticsWithParameterName(obj.SelectedParameterName), MyGroupStatisticsLists);
-                    XYDataList =                arrayfun(@(x) x.getXYData, groupStatistics);
+                    groupStatistics =               arrayfun(@(x) x.getGroupStatisticsWithParameterName(obj.SelectedParameterName), MyGroupStatisticsLists);
+                  XYDataList =                      arrayfun(@(x) x.getXYData, groupStatistics);
 
                 case 'PercentageInRange'
                     assert(length(varargin) == 1, 'Wrong input.')
